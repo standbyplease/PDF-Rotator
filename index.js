@@ -8,24 +8,20 @@ const port = 3000;
 app.get('/rotate-pdf', async (req, res) => {
     try {
         const pdfUrl = req.query.url;
+        if (!pdfUrl) return res.status(400).send('Missing URL. Use ?url=https://yourpdf.com/document.pdf');
 
-        if (!pdfUrl) {
-            return res.status(400).send('Missing URL. Use ?url=https://yourpdf.com/document.pdf');
+        const response = await axios.get(pdfUrl, { responseType: 'arraybuffer' });
+        const pdfDoc = await PDFDocument.load(response.data);
+        const pages = pdfDoc.getPages();
+
+        if (pages.length >= 2) {
+            pages[0].setRotation(degrees(90));
+            pages[1].setRotation(degrees(180));
+        } else {
+            return res.status(400).send('PDF must have at least 2 pages.');
         }
 
-        // Fetch the original PDF
-        const response = await axios.get(pdfUrl, { responseType: 'arraybuffer' });
-        const pdfBytes = response.data;
-
-        // Load and rotate the PDF
-        const pdfDoc = await PDFDocument.load(pdfBytes);
-        pdfDoc.getPages().forEach(page => {
-            page.setRotation(degrees(90));
-        });
-
         const rotatedPdfBytes = await pdfDoc.save();
-
-        // Send the rotated PDF
         res.contentType('application/pdf');
         res.send(Buffer.from(rotatedPdfBytes));
 
@@ -35,6 +31,4 @@ app.get('/rotate-pdf', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`PDF rotation server running at ${port}`);
-});
+app.listen(port, () => console.log(`PDF rotation server running at ${port}`));
