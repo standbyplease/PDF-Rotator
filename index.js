@@ -16,7 +16,7 @@ app.get('/rotate-pdf', async (req, res) => {
 
         if (pages.length >= 2) {
             pages[0].setRotation(degrees(90));
-            pages[1].setRotation(degrees(180));
+            pages[1].setRotation(degrees(270));
         } else {
             return res.status(400).send('PDF must have at least 2 pages.');
         }
